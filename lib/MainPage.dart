@@ -1,13 +1,14 @@
 import 'dart:io';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:ftl_mv_save_manager/FTLMVSaveInfo.dart';
 import 'package:ftl_mv_save_manager/FileSaveNames.dart';
+import 'package:ftl_mv_save_manager/Messages/SettingMessages.dart';
+import 'package:ftl_mv_save_manager/SettingPage.dart';
 import 'ColorStates.dart';
-import 'FTLButton.dart';
-import 'FTLColors.dart';
-import 'FTLDialog.dart';
-import 'FTLTextButton.dart';
+import 'FTLStyle.dart';
+import 'Manager/FTLConfigManager.dart';
 import 'Manager/FTLSaveManager.dart';
 import 'SaveListPage.dart';
 import 'SaveInformationPage.dart';
@@ -18,22 +19,31 @@ import 'Manager/ShipNames.dart';
 import 'package:window_size/window_size.dart';
 
 class MainPage extends StatefulWidget {
-  const MainPage({Key? key}) : super(key: key);
+  final String title;
+  final String versionMain;
+  final String versionDev;
+  final bool dev;
+  final bool hideDevButton;
+  const MainPage({
+    required this.title,
+    required this.versionMain,
+    this.versionDev = "",
+    this.dev = false,
+    this.hideDevButton = false,
+    Key? key,
+  }) : super(key: key);
 
   @override
   State<MainPage> createState() => _MainPageState();
 }
 
 class _MainPageState extends State<MainPage> {
-  final title = "FTL: Multiverse Save Manager";
-  final version = "dev 230426";
   OverlayEntry? _overlayEntry;
+  Timer? _autoSaveTimer;
   final manager = FTLSaveManager();
   final fileSaveNames = FileSaveNames(".ftlsaves\\list.yaml");
-  //var notepadProgramPath = "notepad.exe";
+  final configManager = FTLConfigManager(".ftlsaves\\config.json");
   var notepadProgramPath = r"C:\Program Files\HxD\HxD.exe";
-  bool refreshButtonHover = false;
-  bool settingButtonHover = false;
   SaveInfoFunc? removeFTLSaveInfo;
   SaveInfoFunc? addFTLSaveInfo;
   Func? resetFTLSaveInfo;
@@ -41,6 +51,14 @@ class _MainPageState extends State<MainPage> {
   bool hideInfoWidget = true;
   FTLMVSaveInfo? currentInfo;
   Widget currentInfoWidget = Container();
+
+  bool autoButtonSelected = false;
+
+  void _dev() {
+    var configManager = FTLConfigManager(".ftlsaves\\config.json");
+    configManager.load();
+    configManager.save();
+  }
 
   void messageHandler(Messages message, List<dynamic> args) {
     switch(message) {
@@ -73,7 +91,6 @@ class _MainPageState extends State<MainPage> {
               fileSaveNames.save();
               _changeInfo();
           }
-
       //manager.backupCurrent();
         break;
       case Messages.refreshSaveList:
@@ -83,11 +100,36 @@ class _MainPageState extends State<MainPage> {
           manager.openExplorerBackUpDirectory();
           break;
 
+      case Messages.changeSetting:
+          _changeSetting(args[0], args[1]);
+          break;
+
       case Messages.captureSave:
         _captureSaveMessage(args);
       default:
           break;
     }
+  }
+
+  void _changeSetting(SettingMessages message, dynamic args) {
+    switch(message) {
+      case SettingMessages.deleteSaveWhenExit:
+        {
+          bool enabled = args as bool;
+          configManager.deleteSaveWhenExit = enabled;
+        }
+
+      case SettingMessages.autoSaveInterval:
+        {
+          int time = args as int;
+          configManager.autoSaveIntervalSec = time;
+        }
+        break;
+      default:
+        break;
+    }
+
+    configManager.save();
   }
 
   void _openInfoMessage(List<dynamic> args) {
@@ -164,24 +206,25 @@ class _MainPageState extends State<MainPage> {
   void _showOverlay(BuildContext context) {
     var overlayState = Overlay.of(context);
     _overlayEntry = OverlayEntry(
-      builder: (BuildContext context) => const Center(
-        child: Material(
-          child: FTLDialog(
-            width: 300,
-            height: 80,
-            padding: EdgeInsets.all(8.0),
-            color: FTLColors.blueBackground,
-            child: Center(
-              child: Text("정말 삭제하시겠습니까?",
-                style: TextStyle(
-                  color: FTLColors.normal,
-                  fontSize: 16.0
+      builder: (BuildContext context) {
+          return Stack(
+            children: [
+              const ModalBarrier(
+                color: Color(0xb2000000),
+                dismissible: false,
+              ),
+              Scaffold(
+                backgroundColor: Colors.transparent,
+                body: Center(
+                  child: SettingPage(
+                    config: configManager,
+                    onExit: _hideOverlay,
+                  ),
                 ),
               ),
-            ),
-          ),
-        ),
-      ),
+            ],
+        );
+      },
     );
     overlayState.insert(_overlayEntry!);
   }
@@ -191,11 +234,37 @@ class _MainPageState extends State<MainPage> {
     _overlayEntry = null;
   }
 
+  String _getVersion() {
+    if (widget.dev) {
+      if (widget.versionMain == "") {
+        return "dev ${widget.versionDev}";
+      }
+      else {
+        return "dev ${widget.versionDev} (branch from ${widget.versionMain})";
+      }
+    }
+    else {
+      return widget.versionMain;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
 
-    setWindowTitle(title);
+    configManager.load();
+    if (configManager.deleteSaveWhenExit && fileSaveNames.load()) {
+      for (var name in fileSaveNames.names) {
+        var id = manager.readBackup(name);
+        if (id != -1) {
+          manager.deleteBackup(name);
+        }
+      }
+      fileSaveNames.remove();
+      manager.clear();
+    }
+
+    setWindowTitle(widget.title);
     setWindowMinSize(const Size(1035, 483));
     FTLMessage.setHandler(messageHandler);
   }
@@ -235,7 +304,7 @@ class _MainPageState extends State<MainPage> {
                               mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("$title\n$version",
+                                Text("${widget.title}\n${_getVersion()}",
                                   style: const TextStyle(
                                     color: FTLColors.normal,
                                   ),
@@ -250,27 +319,17 @@ class _MainPageState extends State<MainPage> {
                           child: Column(
                             children: [
                               Expanded(
-                                child: FTLButton(
+                                child: FTLIconButton(Icons.refresh,
                                   width: 35,
                                   margin: const EdgeInsets.all(4.0),
-                                  onHover: (hover) => setState(() => refreshButtonHover = hover),
                                   onClick: () => FTLMessage.refreshSaveList(),
-                                  child : Icon(Icons.refresh,
-                                    color: refreshButtonHover ? FTLColors.selected : FTLColors.normal,
-                                    size: 18,
-                                  ),
                                 ),
                               ),
                               Expanded(
-                                child: FTLButton(
+                                child: FTLIconButton(Icons.settings,
                                   width: 35,
                                   margin: const EdgeInsets.all(4.0),
-                                  onClick: () => FTLMessage.openSetting(),
-                                  onHover: (hover) => setState(() => settingButtonHover = hover),
-                                  child : Icon(Icons.settings,
-                                    color: settingButtonHover ? FTLColors.selected : FTLColors.normal,
-                                    size: 18,
-                                  ),
+                                  onClick: () => _showOverlay(context),
                                 ),
                               ),
                             ],
@@ -304,6 +363,49 @@ class _MainPageState extends State<MainPage> {
                             },
                           ),
                           const Expanded(child: SizedBox()),
+                          (
+                            (widget.dev && !widget.hideDevButton)
+                                ? FTLTextButton("DEV",
+                                    fontSize : 20,
+                                    width: 100,
+                                    margin : const EdgeInsets.all(8),
+                                    onClick: () {
+                                      _dev();
+                                    },
+                                  )
+                                : const SizedBox()
+                          ),
+                          FTLToggleTextButton("Auto",
+                            selected: autoButtonSelected,
+                            width: 80,
+                            normalButtonStyle: FTLButtonStyle(
+                              background: ColorStates(
+                                  normal: const Color(0xff555557),
+                                  hover: const Color(0xffb5b6b9)
+                              ),
+                              border: ColorStates(normal: FTLColors.normal, hover: FTLColors.normal),
+                              child: ColorStates(normal: FTLColors.normal, hover: const Color(0xff425160)),
+                            ),
+                            selectedButtonStyle: FTLButtonStyle(
+                              background: ColorStates(normal: FTLColors.orange, hover: FTLColors.orangeSelected),
+                              border: ColorStates(normal: FTLColors.normal, hover: FTLColors.normal),
+                              child: ColorStates(normal: FTLColors.normal, hover: FTLColors.normal),
+                            ),
+                            onChanged: (selected) {
+                              if (selected) {
+                                var sec = configManager.autoSaveIntervalSec;
+                                _autoSaveTimer = Timer.periodic(Duration(seconds: sec), (timer) {
+                                    FTLMessage.backupCurrentSave();
+                                });
+                              }
+                              else {
+                                _autoSaveTimer?.cancel();
+                              }
+                              setState(() {
+                                autoButtonSelected = selected;
+                              });
+                            },
+                          ),
                           FTLTextButton("Save",
                             fontSize : 20,
                             width: 140,

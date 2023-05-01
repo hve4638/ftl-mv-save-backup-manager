@@ -11,21 +11,22 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-
-      title: 'Flutter Demo',
+      title: 'FTL:MV Save Manager',
       theme: ThemeData(
         textTheme: const TextTheme(
           bodyLarge: TextStyle(
-            //fontFamily: 'MyCustomFont',
-            //fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontSize: 25,
             color: Colors.white,
           ),
         ),
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
       ),
-      home: const MainPage(),
+      home: const MainPage(
+        title: "FTL:MV Save Backup Manager",
+        dev: true,
+        hideDevButton: true,
+        versionMain : "",
+        versionDev : "230501"
+      ),
     );
   }
 }

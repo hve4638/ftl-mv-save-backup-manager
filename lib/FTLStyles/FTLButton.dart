@@ -1,9 +1,9 @@
 import 'dart:ffi';
 
 import 'package:flutter/material.dart';
-import 'package:ftl_mv_save_manager/FTLDialog.dart';
+import 'FTLDialog.dart';
 
-import 'ColorStates.dart';
+import '../ColorStates.dart';
 import 'FTLColors.dart';
 typedef InvokeFunc = void Function();
 typedef OnChangedFunc = void Function(bool);
@@ -18,9 +18,11 @@ class FTLButton extends StatefulWidget {
   final double height;
   final EdgeInsets margin;
   final ColorStates? borderColors;
+  final ColorStates? backgroundColors;
   const FTLButton({
     required this.child,
     this.borderColors,
+    this.backgroundColors,
     this.onHover,
     this.onEnter,
     this.onExit,
@@ -37,11 +39,20 @@ class FTLButton extends StatefulWidget {
 
 class _FTLButtonState extends State<FTLButton> {
   bool entered = false;
+  static final defaultBorderColors = ColorStates();
+  static final defaultBackgroundColors = ColorStates(normal: FTLColors.blueAccent, hover: FTLColors.blueAccent);
   //Color borderColor = FTLColors.border;
 
   @override
+  void initState() {
+    super.initState();
+
+  }
+
+  @override
   Widget build(BuildContext context) {
-    var borderColors = widget.borderColors ?? ColorStates();
+    var borderColors = widget.borderColors ?? defaultBorderColors;
+    var backgroundColors = widget.backgroundColors ?? defaultBackgroundColors;
 
     return Container(
       width : widget.width,
@@ -63,7 +74,7 @@ class _FTLButtonState extends State<FTLButton> {
             widget.onClick?.call();
           },
           child: FTLDialog(
-            color : FTLColors.blueAccent,
+            color :  entered ? backgroundColors.hover : backgroundColors.normal,
             borderColor: entered ? borderColors.hover : borderColors.normal,
             child: Center(
                 child : widget.child

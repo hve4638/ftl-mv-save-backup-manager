@@ -38,4 +38,12 @@ class FileSaveNames {
     var file = File(fileName);
     file.writeAsStringSync(result);
   }
+
+  remove() {
+    var file = File(fileName);
+    if (file.existsSync()) {
+      file.deleteSync();
+    }
+    names.clear();
+  }
 }

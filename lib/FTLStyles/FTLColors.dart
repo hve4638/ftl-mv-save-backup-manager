@@ -9,4 +9,6 @@ class FTLColors {
   static const Color blueBackground = Color(0xff0d171f);
   static const Color blueAccent = Color(0xff09131a);
   static const Color redSelected = Color(0xffea5555);
+  static const Color orangeSelected = Color(0xffffb84e);
+  static const Color orange = Color(0xffff9452);
 }

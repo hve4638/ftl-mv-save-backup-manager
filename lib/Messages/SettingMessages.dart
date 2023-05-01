@@ -1,0 +1,4 @@
+enum SettingMessages {
+  autoSaveInterval,
+  deleteSaveWhenExit,
+}

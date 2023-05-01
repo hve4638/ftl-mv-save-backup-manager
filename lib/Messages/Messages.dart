@@ -9,4 +9,5 @@ enum Messages {
   refreshSaveList,
   openSetting,
   openFileWith,
+  changeSetting,
 }

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:ftl_mv_save_manager/FTLMVSaveInfo.dart';
 
 import './Messages.dart';
+import './SettingMessages.dart';
 typedef MessageHandler = void Function(Messages, List<dynamic>);
 
 class FTLMessage {
@@ -44,5 +45,11 @@ class FTLMessage {
 
   static void openSetting() {
     _handler(Messages.openSetting, []);
+  }
+
+  static void changeSetting(SettingMessages message, dynamic args) {
+    _handler(Messages.changeSetting, [
+      message, args
+    ]);
   }
 }

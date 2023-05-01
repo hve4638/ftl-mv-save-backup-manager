@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ftl_mv_save_manager/ColorStates.dart';
 import 'FTLButton.dart';
 import 'FTLColors.dart';
-import 'ColorStates.dart';
+import '../ColorStates.dart';
 
 class FTLTextButton extends StatefulWidget {
   final String text;
@@ -13,11 +13,13 @@ class FTLTextButton extends StatefulWidget {
   final InvokeFunc? onClick;
   final ColorStates? textColors;
   final ColorStates? borderColors;
+  final ColorStates? backgroundColors;
 
   const FTLTextButton(this.text,
     {
       this.textColors,
       this.borderColors,
+      this.backgroundColors,
       this.fontSize = 20.0,
       this.width = double.infinity,
       this.height = double.infinity,
@@ -35,14 +37,17 @@ class _FTLTextButtonState extends State<FTLTextButton> {
 
   @override
   Widget build(BuildContext context) {
-    var textColors = widget.textColors ?? ColorStates();
-    var borderColors = widget.borderColors ?? ColorStates();
+    final defaultTextAndBorderColorStates = ColorStates(normal: FTLColors.normal, hover: FTLColors.selected);
+    var textColors = widget.textColors ?? defaultTextAndBorderColorStates;
+    var borderColors = widget.borderColors ?? defaultTextAndBorderColorStates;
+    var backgroundColors = widget.backgroundColors ?? ColorStates.all(FTLColors.blueAccent);
 
     return FTLButton(
         width: widget.width,
         height: widget.height,
         margin: widget.margin,
         onClick: widget.onClick,
+        backgroundColors: backgroundColors,
         borderColors: borderColors,
         onEnter : () => setState(() => selected = true),
         onExit : () => setState(() => selected = false),

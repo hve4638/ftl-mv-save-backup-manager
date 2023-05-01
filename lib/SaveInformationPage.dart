@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:ftl_mv_save_manager/FTLDialog.dart';
 import 'package:ftl_mv_save_manager/FTLMVSaveInfo.dart';
 import 'package:ftl_mv_save_manager/Messages/FTLMessage.dart';
 import 'ColorStates.dart';
-import 'FTLButton.dart';
-import 'FTLTextButton.dart';
-import 'FTLColors.dart';
+import 'FTLStyle.dart';
 
 class SaveInformationPage extends StatefulWidget {
   final FTLMVSaveInfo info;
