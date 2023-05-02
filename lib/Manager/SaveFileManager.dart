@@ -1,11 +1,15 @@
 import 'dart:io';
 
-class FTLSaveFileManager {
-  String targetFilePath = r"C:\Use<rs\hve46\Documents\My Games\FasterThanLight\hs_mv_continue.sav";
-  String backupDirectoryPath = ".ftlsaves";
+import '../dev.dart';
+
+class BackupFileManager {
+  String targetDirectoryName = "";
+  String targetFileName = r"hs_mv_continue.sav";
+  String backupDirectoryName = ".ftlsaves";
 
   bool setup() {
-    if (!File(targetFilePath).existsSync()) {
+    var targetFile = _getTargetFile();
+    if (!targetFile.existsSync()) {
       return false;
     }
     _makeBackupDirectoryIfNotExists();
@@ -13,16 +17,30 @@ class FTLSaveFileManager {
   }
 
   void _makeBackupDirectoryIfNotExists() {
-    var directory = Directory(backupDirectoryPath);
+    var directory = _getDirectory();
 
     if (!directory.existsSync()) {
       directory.createSync(recursive: true);
     }
   }
 
+  bool copyTargetFile(String destNameFormat) {
+    var targetFile = _getTargetFile();
+    if (!targetFile.existsSync()) {
+      return false;
+    }
+    else {
+      var destFileName = getBackupFilename(destNameFormat);
+      var destFullPath = "$backupDirectoryName\\$destFileName";
+      targetFile.copySync(destFullPath);
+
+      return true;
+    }
+  }
+
   bool deleteBackupFile(String fileName) {
     if (existsBackupFile(fileName)) {
-      var file = File("$backupDirectoryPath\\$fileName");
+      var file = _getBackupFile(fileName);
       file.deleteSync();
       return true;
     }
@@ -32,34 +50,17 @@ class FTLSaveFileManager {
   }
 
   bool existsBackupFile(String fileName) {
-    var file = File("$backupDirectoryPath\\$fileName");
+    var file = _getBackupFile(fileName);
 
-    if (file.existsSync()) {
-      return true;
-    }
-    else {
-      return false;
-    }
+    return file.existsSync();
   }
 
   bool revertTargetFile(String fileName) {
-    var file = File("$backupDirectoryPath\\$fileName");
-    file.copySync(targetFilePath);
+    var file = _getBackupFile(fileName);
+    var targetFileName = _getTargetFileName();
+
+    file.copySync(targetFileName);
     return true;
-  }
-
-  bool copyTargetFile(String destNameFormat) {
-    var targetFile = File(targetFilePath);
-    if (!targetFile.existsSync()) {
-      return false;
-    }
-    else {
-      var destFileName = getBackupFilename(destNameFormat);
-      var destFullPath = "$backupDirectoryPath\\$destFileName";
-      targetFile.copySync(destFullPath);
-
-      return true;
-    }
   }
 
   String getBackupFilename(String nameFormat) {
@@ -72,8 +73,36 @@ class FTLSaveFileManager {
     return name;
   }
 
-  void openExplorerTargetDirectory() {
+  Directory _getDirectory() {
+    return Directory(backupDirectoryName);
+  }
 
+  File _getBackupFile(String backupFileName) {
+    if (backupDirectoryName == "") {
+      return File(backupFileName);
+    }
+    else if (backupDirectoryName.endsWith(r"\")) {
+      return File("$backupDirectoryName$backupFileName");
+    }
+    else {
+      return File("$backupDirectoryName\\$backupFileName");
+    }
+  }
+
+  File _getTargetFile() {
+    return File(_getTargetFileName());
+  }
+
+  String _getTargetFileName() {
+    if (targetDirectoryName == "") {
+      return targetFileName;
+    }
+    else if (targetDirectoryName.endsWith(r"\")) {
+      return "$targetDirectoryName$targetFileName";
+    }
+    else {
+      return "$targetDirectoryName\\$targetFileName";
+    }
   }
 }
 

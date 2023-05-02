@@ -6,7 +6,7 @@ import 'FTLStyle.dart';
 import 'Messages/FTLMessage.dart';
 
 class SettingPage extends StatefulWidget {
-  final FTLConfigManager config;
+  final ConfigManager config;
   final void Function() onExit;
   const SettingPage({
     required this.config,

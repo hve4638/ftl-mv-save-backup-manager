@@ -1,59 +1,56 @@
 import 'dart:io';
 import 'package:ftl_mv_save_manager/Manager/SaveFileManager.dart';
-import 'package:ftl_mv_save_manager/Manager/SavFileParser.dart';
+import 'package:ftl_mv_save_manager/Manager/BackupFileManager.dart';
+import 'package:ftl_mv_save_manager/dev.dart';
 
 import '../FTLMVSaveInfo.dart';
 
 class FTLSaveManager {
-  final _saveInfoDict = <int, FTLMVSaveInfo>{};
-  final _savFileParser = SavFileParser();
-  final _manager = FTLSaveFileManager();
+  static int _cacheIdCounter = 1;
+  static final _savFileParser = MVSaveInfoParser();
+
+  String backupDirectoryName = "";
+  String targetDirectoryName = "";
+  String targetFileName = "hs_mv_continue.sav";
   String backupFileFormat = "backup_{DATETIME}.sav";
-  int _infoIdCounter = 1;
-  String _lastBackupHash = "";
-  String _baseDirectory = ".ftlsaves";
-  String get baseDirectory => _baseDirectory;
-  set baseDirectory(String path) {
-    _baseDirectory = path;
-    _manager.backupDirectoryPath = path;
-    _savFileParser.basePath = path;
-  }
 
-  FTLSaveManager() {
-    var homeDir = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
-    var targetFilePath = "$homeDir\\Documents\\My Games\\FasterThanLight\\hs_mv_continue.sav";
-
-    _manager.targetFilePath = targetFilePath;
-    baseDirectory = _baseDirectory;
-    _manager.setup();
-  }
+  final backupFileManager = BackupFileManager();
+  final _saveInfoCache = <int, FTLMVSaveInfo>{};
+  int _lastId = -1;
 
   void clear() {
-    _saveInfoDict.clear();
-    _lastBackupHash = "";
+    _lastId = -1;
+    _saveInfoCache.clear();
   }
 
-  int captureBackup() {
-    if (!_manager.setup()) {
+  String getLastInfoHash() {
+    return _saveInfoCache[_lastId]?.hash ?? "";
+  }
+
+  int captureTarget() {
+    if (!backupFileManager.setup()) {
+      devPrint("capture: fail to setup");
       return -1;
     }
     else {
-      var dest = _manager.getBackupFilename(backupFileFormat);
-      if (!_manager.copyTargetFile(dest)) {
+      var dest = backupFileManager.getBackupFilename(backupFileFormat);
+      if (!backupFileManager.copyTargetFile(dest)) {
+        devPrint("capture: fail to copy target");
         return -1;
       }
       else {
+        devPrint("capture: parse");
         return _parseBackup(dest);
       }
     }
   }
 
   void revertBackup(String filename) {
-    _manager.revertTargetFile(filename);
+    backupFileManager.revertTargetFile(filename);
   }
 
   void deleteBackup(String filename) {
-    _manager.deleteBackupFile(filename);
+    backupFileManager.deleteBackupFile(filename);
   }
 
   int readBackup(String filename) {
@@ -61,16 +58,16 @@ class FTLSaveManager {
   }
 
   int _parseBackup(String filename) {
-    if (_manager.existsBackupFile(filename)) {
-      var saveInfo = _savFileParser.parse(filename);
+    if (backupFileManager.existsBackupFile(filename)) {
+      var saveInfo = _savFileParser.parse(filename, filePath: backupDirectoryName);
 
-      if (_lastBackupHash == saveInfo.hash) {
+      if (getLastInfoHash() == saveInfo.hash) {
         return -1;
       }
       else {
-        var id = _infoIdCounter++;
-        _saveInfoDict[id] = saveInfo;
-        _lastBackupHash = saveInfo.hash;
+        var id = _cacheIdCounter++;
+        _saveInfoCache[id] = saveInfo;
+        _lastId = id;
 
         return id;
       }
@@ -81,8 +78,8 @@ class FTLSaveManager {
   }
 
   FTLMVSaveInfo? getSaveInfo(int id) {
-    if (_saveInfoDict.containsKey(id)) {
-      return _saveInfoDict[id];
+    if (_saveInfoCache.containsKey(id)) {
+      return _saveInfoCache[id];
     }
     else {
       return null;
@@ -90,9 +87,21 @@ class FTLSaveManager {
   }
 
   void openExplorerBackUpDirectory() {
-    var directory = Directory(_manager.backupDirectoryPath);
+    var directory = Directory(backupDirectoryName);
 
     Process.runSync('explorer', [directory.path]);
+  }
+
+  String _getTargetFileName() {
+    if (targetDirectoryName == "") {
+      return targetFileName;
+    }
+    else if (targetDirectoryName.endsWith(r"\")) {
+      return "$targetDirectoryName$targetFileName";
+    }
+    else {
+      return "$targetDirectoryName\\$targetFileName";
+    }
   }
 }
 

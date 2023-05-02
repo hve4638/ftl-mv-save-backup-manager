@@ -105,15 +105,11 @@ class _SaveInformationPageState extends State<SaveInformationPage> {
                     margin : const EdgeInsets.all(6),
                     onClick: () => FTLMessage.closeInfo(),
                   ),
-                  FTLButton(
+                  FTLIconButton(Icons.edit_note,
                     width: 56,
                     height: 56,
                     margin : const EdgeInsets.all(6),
                     onClick: () => FTLMessage.openSaveFileWith(widget.info),
-                    child: Icon(
-                      Icons.edit_note,
-                      color: FTLColors.normal,
-                    ),
                   ),
                   const Expanded(child: SizedBox()),
                   FTLTextButton("Delete",

@@ -1,27 +1,24 @@
-
-
-
 import 'dart:convert';
 import 'dart:io';
 
-class FTLConfigManager {
-  final String _fileName;
-  var directoryPath = ".";
+class ConfigManager {
+  String filePath = "";
+  String fileName = "config.json";
   final config = <String, dynamic>{
     "AutoSaveIntervalSec" : 60,
     "DeleteSaveWhenExit" : false,
+    "openBackUpFileAs" : "notepad",
   };
 
   int get autoSaveIntervalSec => config["AutoSaveIntervalSec"] as int;
   bool get deleteSaveWhenExit => config["DeleteSaveWhenExit"] as bool;
-
   set autoSaveIntervalSec(int value) => config["AutoSaveIntervalSec"] = value;
   set deleteSaveWhenExit(bool value) => config["DeleteSaveWhenExit"] = value;
 
-  FTLConfigManager(this._fileName);
+  ConfigManager();
 
   bool load() {
-    var file = File(_fileName);
+    var file = _getFile();
     if (!file.existsSync()) {
       return false;
     }
@@ -66,8 +63,20 @@ class FTLConfigManager {
   }
 
   save() {
-    var file = File(_fileName);
+    var file = _getFile();
     var jsonString = jsonEncode(config);
     file.writeAsStringSync(jsonString);
+  }
+
+  File _getFile() {
+    if (filePath == "") {
+      return File(fileName);
+    }
+    else if (filePath.endsWith(r"\")) {
+      return File("$filePath$fileName");
+    }
+    else {
+      return File("$filePath\\$fileName");
+    }
   }
 }

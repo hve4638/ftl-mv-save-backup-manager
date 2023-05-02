@@ -3,7 +3,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:ftl_mv_save_manager/FTLMVSaveInfo.dart';
-import 'package:ftl_mv_save_manager/FileSaveNames.dart';
+import 'package:ftl_mv_save_manager/Manager/BackListManager.dart';
 import 'package:ftl_mv_save_manager/Messages/SettingMessages.dart';
 import 'package:ftl_mv_save_manager/SettingPage.dart';
 import 'ColorStates.dart';
@@ -18,18 +18,28 @@ import 'ListenerSignatures.dart';
 import 'Manager/ShipNames.dart';
 import 'package:window_size/window_size.dart';
 
+import 'dev.dart';
+
 class MainPage extends StatefulWidget {
   final String title;
   final String versionMain;
   final String versionDev;
   final bool dev;
   final bool hideDevButton;
+  final Color background;
+  final BackupListManager backupListManager;
+  final ConfigManager configManager;
+  final FTLSaveManager ftlSaveManager;
   const MainPage({
     required this.title,
     required this.versionMain,
+    required this.backupListManager,
+    required this.configManager,
+    required this.ftlSaveManager,
     this.versionDev = "",
     this.dev = false,
     this.hideDevButton = false,
+    this.background = FTLColors.redBackground,
     Key? key,
   }) : super(key: key);
 
@@ -38,12 +48,13 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  OverlayEntry? _overlayEntry;
-  Timer? _autoSaveTimer;
-  final manager = FTLSaveManager();
-  final fileSaveNames = FileSaveNames(".ftlsaves\\list.yaml");
-  final configManager = FTLConfigManager(".ftlsaves\\config.json");
+  BackupListManager get fileSaveNames => widget.backupListManager;
+  ConfigManager get configManager => widget.configManager;
+  FTLSaveManager get manager => widget.ftlSaveManager;
   var notepadProgramPath = r"C:\Program Files\HxD\HxD.exe";
+  Timer? _autoSaveTimer;
+  OverlayEntry? _overlayEntry;
+
   SaveInfoFunc? removeFTLSaveInfo;
   SaveInfoFunc? addFTLSaveInfo;
   Func? resetFTLSaveInfo;
@@ -55,9 +66,7 @@ class _MainPageState extends State<MainPage> {
   bool autoButtonSelected = false;
 
   void _dev() {
-    var configManager = FTLConfigManager(".ftlsaves\\config.json");
-    configManager.load();
-    configManager.save();
+
   }
 
   void messageHandler(Messages message, List<dynamic> args) {
@@ -91,7 +100,6 @@ class _MainPageState extends State<MainPage> {
               fileSaveNames.save();
               _changeInfo();
           }
-      //manager.backupCurrent();
         break;
       case Messages.refreshSaveList:
         _refreshSaveListMessage();
@@ -160,7 +168,8 @@ class _MainPageState extends State<MainPage> {
   }
 
   void _captureSaveMessage(List<dynamic> args) {
-    var id = manager.captureBackup();
+    var id = manager.captureTarget();
+    devPrint("capture: $id");
     if (id != -1) {
       var info = manager.getSaveInfo(id)!;
       addFTLSaveInfo?.call(info);
@@ -252,7 +261,6 @@ class _MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
 
-    configManager.load();
     if (configManager.deleteSaveWhenExit && fileSaveNames.load()) {
       for (var name in fileSaveNames.names) {
         var id = manager.readBackup(name);
@@ -264,8 +272,6 @@ class _MainPageState extends State<MainPage> {
       manager.clear();
     }
 
-    setWindowTitle(widget.title);
-    setWindowMinSize(const Size(1035, 483));
     FTLMessage.setHandler(messageHandler);
   }
 
@@ -274,7 +280,7 @@ class _MainPageState extends State<MainPage> {
     return Scaffold(
       backgroundColor: Colors.black54,
       body: Container(
-        color: FTLColors.redBackground,
+        color: widget.background,
         child: Row(
           children: [
             SizedBox(
@@ -406,7 +412,7 @@ class _MainPageState extends State<MainPage> {
                               });
                             },
                           ),
-                          FTLTextButton("Save",
+                          FTLTextButton("Back up",
                             fontSize : 20,
                             width: 140,
                             margin : const EdgeInsets.all(8),

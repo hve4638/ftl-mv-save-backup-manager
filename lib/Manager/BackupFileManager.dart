@@ -6,17 +6,16 @@ import '../FTLMVSaveInfo.dart';
 import 'ShipImgs.dart';
 import 'ShipNames.dart';
 
-class SavFileParser {
+
+class MVSaveInfoParser {
   static const int SHIP_NAME_OFFSET = 0x24;
-  String basePath = "";
+  final shipNames = ShipNames();
+  final shipImages = ShipImgs();
 
-  FTLMVSaveInfo parse(String filename) {
-    String filePath = _getFilePath(filename);
-
-    var file = File(filePath);
+  FTLMVSaveInfo parse(String filename, { String filePath = "" }) {
+    var file = _getFile(filename, filePath: filePath);
     var bytes = file.readAsBytesSync();
     var hash = _getHash(bytes);
-
 
     int offset, offsetEnd, length;
     offset = SHIP_NAME_OFFSET;
@@ -27,12 +26,10 @@ class SavFileParser {
     offset = _findReadableByteIndex(bytes, offsetEnd);
     offsetEnd = _findUnreadableByteIndex(bytes, offset);
     length = offsetEnd - offset;
-    var shipRaw = _readByteAsString(bytes, offset, length);
-    var shipNames = ShipNames();
-    var ship = shipNames[shipRaw] ?? shipRaw;
 
-    var shipImgs = ShipImgs();
-    var img = shipImgs[shipRaw] + "_base.png";
+    var shipRaw = _readByteAsString(bytes, offset, length);
+    var ship = shipNames[shipRaw] ?? shipRaw;
+    var img = "${shipImages[shipRaw]}_base.png";
 
     return FTLMVSaveInfo(
         name: name,
@@ -45,15 +42,15 @@ class SavFileParser {
     );
   }
 
-  String _getFilePath(String filename) {
-    if (basePath == "") {
-      return filename;
+  File _getFile(String filename, { String filePath = "" }) {
+    if (filePath == "") {
+      return File(filename);
     }
-    else if (basePath.endsWith("\\") || basePath.endsWith("/")) {
-      return "$basePath$filename";
+    else if (filePath.endsWith(r"\") || filePath.endsWith("/")) {
+      return File("$filePath$filename");
     }
     else {
-      return "$basePath\\$filename";
+      return File("$filePath\\$filename");
     }
   }
 
@@ -77,15 +74,6 @@ class SavFileParser {
     }
     return -1;
   }
-  int _findExitByteIndex(Uint8List bytes, int startOffset) {
-    for (int i = startOffset; i < bytes.length; i++) {
-      var byte = bytes[i];
-      if (_isExitChar(byte)) {
-        return i;
-      }
-    }
-    return -1;
-  }
 
   String _readByteAsString(Uint8List bytes, int startOffset, int length) {
     var buffer = StringBuffer();
@@ -95,33 +83,6 @@ class SavFileParser {
       buffer.write(ch);
     }
     return buffer.toString();
-  }
-
-  String _readByteAsStringLegacy(Uint8List bytes, int startOffset) {
-    var buffer = StringBuffer();
-    for (int i = startOffset; i < bytes.length; i++) {
-      var byte = bytes[i];
-      if (_isExitChar(byte)) {
-        break;
-      }
-      else {
-        var ch = String.fromCharCode(byte);
-        if (_isPrintable(ch)) {
-          buffer.write(ch);
-        }
-      }
-    }
-    return buffer.toString();
-  }
-
-  bool _isExitChar(int value) {
-    switch(value){
-      case 0x0:
-      case 0x1:
-        return true;
-      default:
-        return false;
-    }
   }
 
   bool _isPrintable(String char) {

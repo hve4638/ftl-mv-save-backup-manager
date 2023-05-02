@@ -29,11 +29,11 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   window_manager: ^0.3.2
-  yaml: ^3.1.1
   crypto: ^3.0.2
   csv: ^5.0.2
   flutter:
     sdk: flutter
+  loading_animation_widget: ^1.2.0+4
   window_size:
     git:
       url: https://github.com/google/flutter-desktop-embedding.git

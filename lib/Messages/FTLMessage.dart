@@ -23,7 +23,7 @@ class FTLMessage {
     _handler(Messages.closeInfo, []);
   }
   static void openSaveFileWith(FTLMVSaveInfo info) {
-    _handler(Messages.openFileWith, [info.filePath]);
+    _handler(Messages.openFileWith, [info.fullPath]);
   }
   static void deleteInfo(BuildContext context, FTLMVSaveInfo info) {
     _handler(Messages.deleteInfo, [context, info]);

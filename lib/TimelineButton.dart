@@ -8,7 +8,7 @@ class TimelineButton extends StatefulWidget {
   final EdgeInsets margin;
   final ColorStates? colorStates;
   final FTLMVSaveInfo saveInfo;
-  TimelineButton({
+  const TimelineButton({
         required this.saveInfo,
         this.margin = const EdgeInsets.all(0.0),
         this.colorStates,

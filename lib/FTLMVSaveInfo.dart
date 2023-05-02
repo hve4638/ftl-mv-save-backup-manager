@@ -17,5 +17,17 @@ class FTLMVSaveInfo {
     required this.hash
   });
 
+  String get fullPath {
+    if (filePath == "") {
+      return "$fileName";
+    }
+    else if (filePath.endsWith(r"\")) {
+      return "$filePath$fileName";
+    }
+    else {
+      return "$filePath\\$fileName";
+    }
+  }
+
   static FTLMVSaveInfo empty() => FTLMVSaveInfo(name: "NAME", ship: "SHIP", img: 'assets/ships/mupv_stealth_a_base.png', fileName: "filename.sav", filePath: "fullpath", dateTime: DateTime.now(), hash: "ABCDE");
 }
