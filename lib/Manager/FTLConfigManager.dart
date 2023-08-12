@@ -8,12 +8,15 @@ class ConfigManager {
     "AutoSaveIntervalSec" : 60,
     "DeleteSaveWhenExit" : false,
     "openBackUpFileAs" : "notepad",
+    "targetDirectory" : "",
   };
 
   int get autoSaveIntervalSec => config["AutoSaveIntervalSec"] as int;
   bool get deleteSaveWhenExit => config["DeleteSaveWhenExit"] as bool;
+  String get targetDirectory => config["targetDirectory"] as String;
   set autoSaveIntervalSec(int value) => config["AutoSaveIntervalSec"] = value;
   set deleteSaveWhenExit(bool value) => config["DeleteSaveWhenExit"] = value;
+  set targetDirectory(String value) => config["targetDirectory"] = value;
 
   ConfigManager();
 
@@ -35,6 +38,8 @@ class ConfigManager {
       bool fail = false;
       fail |= !_trySetAsInt("AutoSaveIntervalSec", json: json);
       fail |= !_trySetAsBool("DeleteSaveWhenExit", json: json);
+      fail |= !_trySetAsString("openBackUpFileAs", json: json);
+      fail |= !_trySetAsString("targetDirectory", json: json);
 
       return !fail;
     }
@@ -54,6 +59,17 @@ class ConfigManager {
   bool _trySetAsBool(String key, { required json }) {
     var item = json[key];
     if (item is bool) {
+      config[key] = item;
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+
+  bool _trySetAsString(String key, { required json }) {
+    var item = json[key];
+    if (item is String) {
       config[key] = item;
       return true;
     }

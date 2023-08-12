@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'dart:async';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:ftl_mv_save_manager/FTLMVSaveInfo.dart';
 import 'package:ftl_mv_save_manager/Manager/BackListManager.dart';
+import 'package:ftl_mv_save_manager/Manager/TextManager.dart';
 import 'package:ftl_mv_save_manager/Messages/SettingMessages.dart';
 import 'package:ftl_mv_save_manager/SettingPage.dart';
 import 'ColorStates.dart';
@@ -30,12 +32,14 @@ class MainPage extends StatefulWidget {
   final BackupListManager backupListManager;
   final ConfigManager configManager;
   final FTLSaveManager ftlSaveManager;
+  final TextManager textManager;
   const MainPage({
     required this.title,
     required this.versionMain,
     required this.backupListManager,
     required this.configManager,
     required this.ftlSaveManager,
+    required this.textManager,
     this.versionDev = "",
     this.dev = false,
     this.hideDevButton = false,
@@ -65,8 +69,16 @@ class _MainPageState extends State<MainPage> {
 
   bool autoButtonSelected = false;
 
-  void _dev() {
+  String popupMessage = "Test?";
+  Color popupMessageColor = Colors.transparent;
 
+  void _dev() async {
+    String? result = await FilePicker.platform.getDirectoryPath();
+
+    if (result != null) {
+      var a = result;//.files.single.path!;
+      devPrint("dev? $a");
+    }
   }
 
   void messageHandler(Messages message, List<dynamic> args) {
@@ -114,6 +126,21 @@ class _MainPageState extends State<MainPage> {
 
       case Messages.captureSave:
         _captureSaveMessage(args);
+        break;
+
+      case Messages.popupMessage:
+        setState(() {
+          popupMessage = (args[0] as String?) ?? "";
+          popupMessageColor = (args[1] as Color?) ?? Colors.transparent;
+        });
+        Future.delayed(Duration(seconds: args[2] as int))
+            .then((value) {
+              setState(() {
+                popupMessageColor = Colors.transparent;
+              });
+            });
+        break;
+
       default:
           break;
     }
@@ -133,6 +160,13 @@ class _MainPageState extends State<MainPage> {
           configManager.autoSaveIntervalSec = time;
         }
         break;
+
+      case SettingMessages.targetDirectory:
+        {
+
+        }
+        break;
+
       default:
         break;
     }
@@ -179,7 +213,8 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
-  void _refreshSaveListMessage() {
+  void _refreshSaveListMessage() async {
+    await Future.delayed(const Duration(milliseconds: 100));
     manager.clear();
     resetFTLSaveInfo?.call();
     _changeInfo();
@@ -197,14 +232,14 @@ class _MainPageState extends State<MainPage> {
       }
     }
     else {
-      print("load fail");
+      devPrint("[_refreshSaveListMessage] load fail");
     }
   }
 
   void _runProcess(String programPath, List<String> args) {
     Process.run(programPath, args)
         .then((ProcessResult result) {
-        print(result.stdout);
+        devPrint(result.stdout);
     });
   }
 
@@ -227,6 +262,7 @@ class _MainPageState extends State<MainPage> {
                 body: Center(
                   child: SettingPage(
                     config: configManager,
+                    textManager: widget.textManager,
                     onExit: _hideOverlay,
                   ),
                 ),
@@ -354,13 +390,35 @@ class _MainPageState extends State<MainPage> {
                     height: 340,
                     child : currentInfoWidget,
                   ),
-                  const Expanded(child: SizedBox()),
+                  Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const Expanded(child: SizedBox()),
+                          Row(
+                            children: [
+                              const Expanded(child: SizedBox()),
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(24.0,0,24.0,0),
+                                child: Text(popupMessage,
+                                    style: TextStyle(
+                                        color: popupMessageColor
+                                    )
+                                ),
+                              ),
+
+                            ],
+                          ),
+                        ],
+                      )
+                  ),
                   Container(
                       padding : const EdgeInsets.all(8),
                       height : 78,
                       child: Row(
                         children: [
-                          FTLTextButton("Open",
+                          FTLTextButton(widget.textManager["!DirectoryOpenButton"],
                             fontSize : 20,
                             width: 100,
                             margin : const EdgeInsets.all(8),
@@ -381,7 +439,7 @@ class _MainPageState extends State<MainPage> {
                                   )
                                 : const SizedBox()
                           ),
-                          FTLToggleTextButton("Auto",
+                          FTLToggleTextButton(widget.textManager["!AutoButton"],
                             selected: autoButtonSelected,
                             width: 80,
                             normalButtonStyle: FTLButtonStyle(
@@ -412,7 +470,7 @@ class _MainPageState extends State<MainPage> {
                               });
                             },
                           ),
-                          FTLTextButton("Back up",
+                          FTLTextButton(widget.textManager["!BackupButton"],
                             fontSize : 20,
                             width: 140,
                             margin : const EdgeInsets.all(8),

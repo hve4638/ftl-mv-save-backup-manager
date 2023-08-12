@@ -1,0 +1,15 @@
+!caption,MV Save Manager
+!title,MV Save Manager
+!backupbutton,Backup
+!autobutton,Auto
+!directoryopenbutton,Open
+!configtext,설정
+!autosaveintervaltext,자동저장 간격
+!deletewhenexittext,종료시 백업 세이브 삭제
+!configclosebutton,닫기
+!secftext,{}초
+!minftext,{}분
+!hourftext,{}시간
+!msgtrybackupduplicatefile,중복된 세이브 파일입니다
+!msgfilenotfound,파일을 찾을 수 없습니다
+!msgfailtobackup,백업중 오류가 발생했습니다

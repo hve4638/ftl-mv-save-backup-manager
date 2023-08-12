@@ -52,4 +52,10 @@ class FTLMessage {
       message, args
     ]);
   }
+
+  static void popupMessage(String message, Color color, int seconds) {
+    _handler(Messages.popupMessage, [
+      message, color, seconds
+    ]);
+  }
 }

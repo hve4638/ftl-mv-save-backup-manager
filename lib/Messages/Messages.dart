@@ -10,4 +10,5 @@ enum Messages {
   openSetting,
   openFileWith,
   changeSetting,
+  popupMessage
 }

@@ -1,9 +1,12 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:ftl_mv_save_manager/Manager/SaveFileManager.dart';
 import 'package:ftl_mv_save_manager/Manager/BackupFileManager.dart';
 import 'package:ftl_mv_save_manager/dev.dart';
 
 import '../FTLMVSaveInfo.dart';
+import '../Messages/FTLMessage.dart';
+import 'TextManager.dart';
 
 class FTLSaveManager {
   static int _cacheIdCounter = 1;
@@ -17,6 +20,11 @@ class FTLSaveManager {
   final backupFileManager = BackupFileManager();
   final _saveInfoCache = <int, FTLMVSaveInfo>{};
   int _lastId = -1;
+  final TextManager textManager;
+
+  FTLSaveManager({
+    required this.textManager,
+  });
 
   void clear() {
     _lastId = -1;
@@ -29,17 +37,17 @@ class FTLSaveManager {
 
   int captureTarget() {
     if (!backupFileManager.setup()) {
-      devPrint("capture: fail to setup");
       return -1;
     }
     else {
       var dest = backupFileManager.getBackupFilename(backupFileFormat);
       if (!backupFileManager.copyTargetFile(dest)) {
-        devPrint("capture: fail to copy target");
+        FTLMessage.popupMessage("Exception occur while backup", Colors.red, 2);
+        devPrint("[captureTarget] fail to copy target");
         return -1;
       }
       else {
-        devPrint("capture: parse");
+        devPrint("[captureTarget] parse");
         return _parseBackup(dest);
       }
     }
@@ -62,6 +70,7 @@ class FTLSaveManager {
       var saveInfo = _savFileParser.parse(filename, filePath: backupDirectoryName);
 
       if (getLastInfoHash() == saveInfo.hash) {
+        FTLMessage.popupMessage("Unable to back up duplicate files", Colors.red, 2);
         return -1;
       }
       else {

@@ -1,15 +1,20 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:ftl_mv_save_manager/Clickable.dart';
 import 'package:ftl_mv_save_manager/Manager/FTLConfigManager.dart';
+import 'package:ftl_mv_save_manager/Manager/TextManager.dart';
 import 'package:ftl_mv_save_manager/Messages/SettingMessages.dart';
 import 'FTLStyle.dart';
 import 'Messages/FTLMessage.dart';
+import 'dev.dart';
 
 class SettingPage extends StatefulWidget {
   final ConfigManager config;
+  final TextManager textManager;
   final void Function() onExit;
   const SettingPage({
     required this.config,
+    required this.textManager,
     required this.onExit,
     Key? key,
   }) : super(key: key);
@@ -19,6 +24,7 @@ class SettingPage extends StatefulWidget {
 }
 
 class _SettingPageState extends State<SettingPage> {
+  bool saveDirectoryHover = false;
   bool deleteSaveWhenExit = false;
   int autoSaveCurrentIndex = 0;
   var autoSaveItems = <String>[
@@ -53,32 +59,64 @@ class _SettingPageState extends State<SettingPage> {
 
     return FTLDialog(
       width: 400,
-      height: 200,
+      height: 240,
       padding: const EdgeInsets.all(8.0),
       color: FTLColors.blueAccent,
       child: Column(
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.all(2.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("설정",
-                  style: TextStyle(
+                Text(widget.textManager["!configtext"],
+                  style: const TextStyle(
                       color: FTLColors.normal,
                       fontSize: 25.0
                   ),
                 ),
-                Expanded(child: SizedBox()),
+                const Expanded(child: SizedBox()),
               ],
             ),
           ),
+
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
-                Text("종료시 백업 세이브 삭제", style: ftlTextStyle),
+                Clickable(
+                  child: Text("세이브파일 경로 지정",
+                      style: TextStyle(
+                        fontSize: 20.0,
+                        color : saveDirectoryHover ? FTLColors.selected : FTLColors.normal,
+                      )
+                  ),
+                  onClick: () {
+                    FilePicker.platform.getDirectoryPath().then((result) {
+                      devPrint("dev? $result");
+                      if (result != null) {
+                        devPrint("dev? $result");
+                        //FTLMessage.changeSetting(SettingMessages.targetDirectory, result);
+                      }
+                      //devPrint("click? $result");
+                    });
+                  },
+                  onHover: (hovered) {
+                    setState(() {
+                      saveDirectoryHover = hovered;
+                    });
+                  },
+                )
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Text(widget.textManager["!deletewhenexittext"], style: ftlTextStyle),
                 const SizedBox(width: 20),
                 FTLCheckBox(
                   width: 20,
@@ -100,7 +138,7 @@ class _SettingPageState extends State<SettingPage> {
             child: Row(
               children: [
                 FTLSwitchableTextButton(
-                  message: "자동 저장 간격 : ",
+                  message: "${widget.textManager["!autosaveintervaltext"]} : ",
                   errorMessage: "${widget.config.autoSaveIntervalSec} 초",
                   items: autoSaveItems,
                   onClick: (index) {

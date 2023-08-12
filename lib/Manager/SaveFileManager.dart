@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
 
+import '../Messages/FTLMessage.dart';
 import '../dev.dart';
 
 class BackupFileManager {
@@ -10,6 +12,8 @@ class BackupFileManager {
   bool setup() {
     var targetFile = _getTargetFile();
     if (!targetFile.existsSync()) {
+      FTLMessage.popupMessage("Save file does not exist", Colors.red, 2);
+      devPrint("[BackupFileManager.setup] can not load file : ${targetFile.path}");
       return false;
     }
     _makeBackupDirectoryIfNotExists();
@@ -90,7 +94,9 @@ class BackupFileManager {
   }
 
   File _getTargetFile() {
-    return File(_getTargetFileName());
+    var filename = _getTargetFileName();
+    devPrint("[_getTargetFile] $filename");
+    return File(filename);
   }
 
   String _getTargetFileName() {
